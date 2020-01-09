@@ -6,7 +6,10 @@ It can set different linear convolution kernel
 ## Demo
 -----
 ##### Original image
-![](ori.jpg)
+![](img/ori.jpg)
 
 ##### Image after 20 iterations with 3x3 Gaussian filtering
-![](process.jpg)
+![](img/process.jpg)
+
+##### Image after 20 iterations with 5x5 Box filtering
+![](img/process_5x5box.jpg)

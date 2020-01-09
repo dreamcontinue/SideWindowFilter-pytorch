@@ -13,7 +13,7 @@ class SideWindowFilter(nn.Module):
         # original conv
         self.conv_ori = nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size, bias=bias, padding=self.radius,
                                   stride=stride, dilation=dilation, groups=groups, padding_mode=padding_mode)
-        # 8 different directions convs
+        # 8 different directions side window convs
         self.conv_l = nn.Conv2d(in_channels, out_channels, kernel_size=(kernel_size, self.radius+1), bias=bias, padding=0,
                                   stride=stride, dilation=dilation, groups=groups, padding_mode=padding_mode)
         self.conv_r = nn.Conv2d(in_channels, out_channels, kernel_size=(kernel_size, self.radius+1), bias=bias, padding=0,
@@ -80,7 +80,6 @@ class SideWindowFilter(nn.Module):
 
 import numpy as np
 from PIL import Image
-import matplotlib.pyplot as plt
 from torch.autograd import Variable
 
 def preprocess_image(pil_im):
@@ -138,12 +137,17 @@ def process(img_path,filter,iteration=1):
 
 
 if __name__ == '__main__':
-    img_path='ori.jpg'
+    img_path= 'img/ori.jpg'
     filter=np.array([[[[0.0453542,0.0566406,0.0453542],
                        [0.0566406,0.0707355,0.0566406],
                        [0.0453542,0.0566406,0.0453542]]]],dtype=np.float)
+    # filter=np.array([[[[1,1,1,1,1],
+    #                    [1,1,1,1,1],
+    #                    [1,1,1,1,1],
+    #                    [1,1,1,1,1],
+    #                    [1,1,1,1,1]]]],dtype=np.float)
     filter/=np.sum(filter)
     print(filter)
-    img=process(img_path,filter=filter,iteration=20)
-    img.save('process.jpg')
+    img=process(img_path,filter=filter,iteration=5)
+    # img.save('img/process.jpg')
 
