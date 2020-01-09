@@ -11,5 +11,5 @@ It can set different linear convolution kernel
 ##### Image after 20 iterations with 3x3 Gaussian filtering
 ![](img/process.jpg)
 
-##### Image after 20 iterations with 5x5 Box filtering
+##### Image after 5 iterations with 5x5 Box filtering
 ![](img/process_5x5box.jpg)
