@@ -109,19 +109,15 @@ def recover_image(im_as_var):
     img=Image.fromarray(np.uint8(img),'RGB')
     return img
 
-
 def sidewindowfilter(img,swf):
-
     b,c,w,h=img.shape
     for i in range(c):
         img[:,i,:,:] = swf(img[:,i,:,:].view(b,1,w,h)).view(b,w,h)
     return img
 
-
-
 def process(img_path,filter,iteration=1):
     img = Image.open(img_path).convert('RGB')
-    img.show()
+    # img.show()
 
     img_as_var = preprocess_image(img)
     if filter is not None:
@@ -134,7 +130,7 @@ def process(img_path,filter,iteration=1):
         img_as_var = sidewindowfilter(img_as_var, swf)
 
     img = recover_image(img_as_var)
-    img.show()
+    # img.show()
     return img
 
 if __name__ == '__main__':

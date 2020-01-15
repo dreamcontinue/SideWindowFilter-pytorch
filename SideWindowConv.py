@@ -40,7 +40,6 @@ class SideWindowConv(nn.Module):
         self.conv_sw.weight.data=self.conv_ori.weight.data[:,:,self.radius:,:self.radius+1]
         self.conv_se.weight.data=self.conv_ori.weight.data[:,:,self.radius:,self.radius:]
 
-
     def forward(self, x):
         # Custom padding    l       r      t             b
         # F.pad(,[lllll, rrrrr, ttttt, bbbbb])
