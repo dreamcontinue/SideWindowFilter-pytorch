@@ -5,12 +5,17 @@ At the same time, We also designed a **[Side Window Convolution](SideWindowConv.
 Unfortunately, Our experiments have found that this Side Window Convolution is not as good as the original convolution.
 
 ## Demo
-##### Original image
-![](img/ori.jpg)
+#### Original image
+<div align="center">
+ <img src="img/ori.jpg" width = "500" height = "500" alt="Original image" />
+ </div>
 
-##### Image after 20 iterations with 3x3 Gaussian filtering
-![](img/process.jpg)
+#### Image after 20 iterations with 3x3 Gaussian filtering
+<div align="center">
+ <img src="img/process.jpg" width = "500" height = "500" alt="Image after 5 iterations with 5x5 Box filtering" />
+ </div>
 
-##### Image after 5 iterations with 5x5 Box filtering
-![](img/process_5x5box.jpg)
- <img src="img/process_5x5box.jpg" width = "600" height = "600" alt="Image after 5 iterations with 5x5 Box filtering" align=center />
+#### Image after 5 iterations with 5x5 Box filtering
+<div align="center">
+ <img src="img/process_5x5box.jpg" width = "500" height = "500" alt="Image after 5 iterations with 5x5 Box filtering" />
+ </div>
