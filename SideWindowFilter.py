@@ -2,48 +2,47 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 class SideWindowFilter(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, stride=1,
                  dilation=1, groups=1, bias=False):
         super(SideWindowFilter, self).__init__()
-
-        assert kernel_size >= 3, 'kernel size must great than 3'
-        self.radius = kernel_size//2
+        assert kernel_size >= 3 and kernel_size & 2 == 1, 'kernel size must be great than 3 and odd'
+        self.radius = kernel_size // 2
         # Original conv to get 3x3 filter parameters
         self.conv_ori = nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size, bias=bias, padding=self.radius,
                                   stride=stride, dilation=dilation, groups=groups)
         # 8 different directions side window convs
-        self.conv_l = nn.Conv2d(in_channels, out_channels, kernel_size=(kernel_size, self.radius+1), bias=bias,
+        self.conv_l = nn.Conv2d(in_channels, out_channels, kernel_size=(kernel_size, self.radius + 1), bias=bias,
                                 padding=0, stride=stride, dilation=dilation, groups=groups)
-        self.conv_r = nn.Conv2d(in_channels, out_channels, kernel_size=(kernel_size, self.radius+1), bias=bias,
+        self.conv_r = nn.Conv2d(in_channels, out_channels, kernel_size=(kernel_size, self.radius + 1), bias=bias,
                                 padding=0, stride=stride, dilation=dilation, groups=groups)
-        self.conv_u = nn.Conv2d(in_channels, out_channels, kernel_size=(self.radius+1, kernel_size), bias=bias,
+        self.conv_u = nn.Conv2d(in_channels, out_channels, kernel_size=(self.radius + 1, kernel_size), bias=bias,
                                 padding=0, stride=stride, dilation=dilation, groups=groups)
-        self.conv_d = nn.Conv2d(in_channels, out_channels, kernel_size=(self.radius+1, kernel_size), bias=bias,
+        self.conv_d = nn.Conv2d(in_channels, out_channels, kernel_size=(self.radius + 1, kernel_size), bias=bias,
                                 padding=0, stride=stride, dilation=dilation, groups=groups)
-        self.conv_nw = nn.Conv2d(in_channels, out_channels, kernel_size=(self.radius+1, self.radius+1), bias=bias,
-                                padding=0, stride=stride, dilation=dilation, groups=groups)
-        self.conv_ne = nn.Conv2d(in_channels, out_channels, kernel_size=(self.radius+1, self.radius+1), bias=bias,
-                                padding=0, stride=stride, dilation=dilation, groups=groups)
-        self.conv_sw = nn.Conv2d(in_channels, out_channels, kernel_size=(self.radius+1, self.radius+1), bias=bias,
-                                padding=0, stride=stride, dilation=dilation, groups=groups)
-        self.conv_se = nn.Conv2d(in_channels, out_channels, kernel_size=(self.radius+1, self.radius+1), bias=bias,
-                                padding=0, stride=stride, dilation=dilation, groups=groups)
+        self.conv_nw = nn.Conv2d(in_channels, out_channels, kernel_size=(self.radius + 1, self.radius + 1), bias=bias,
+                                 padding=0, stride=stride, dilation=dilation, groups=groups)
+        self.conv_ne = nn.Conv2d(in_channels, out_channels, kernel_size=(self.radius + 1, self.radius + 1), bias=bias,
+                                 padding=0, stride=stride, dilation=dilation, groups=groups)
+        self.conv_sw = nn.Conv2d(in_channels, out_channels, kernel_size=(self.radius + 1, self.radius + 1), bias=bias,
+                                 padding=0, stride=stride, dilation=dilation, groups=groups)
+        self.conv_se = nn.Conv2d(in_channels, out_channels, kernel_size=(self.radius + 1, self.radius + 1), bias=bias,
+                                 padding=0, stride=stride, dilation=dilation, groups=groups)
 
     def set_filter(self, filter=None):
         if filter is not None:
             self.conv_ori.weight.data = filter
-        self.conv_l.weight.data = self.conv_ori.weight.data[:, :, :, :self.radius+1]
+        self.conv_l.weight.data = self.conv_ori.weight.data[:, :, :, :self.radius + 1]
         self.conv_r.weight.data = self.conv_ori.weight.data[:, :, :, self.radius:]
-        self.conv_u.weight.data = self.conv_ori.weight.data[:, :, :self.radius+1, :]
+        self.conv_u.weight.data = self.conv_ori.weight.data[:, :, :self.radius + 1, :]
         self.conv_d.weight.data = self.conv_ori.weight.data[:, :, self.radius:, :]
-        self.conv_nw.weight.data = self.conv_ori.weight.data[:,:,:self.radius+1,:self.radius+1]
-        self.conv_ne.weight.data = self.conv_ori.weight.data[:,:,:self.radius+1,self.radius:]
-        self.conv_sw.weight.data = self.conv_ori.weight.data[:,:,self.radius:,:self.radius+1]
-        self.conv_se.weight.data = self.conv_ori.weight.data[:,:,self.radius:,self.radius:]
+        self.conv_nw.weight.data = self.conv_ori.weight.data[:, :, :self.radius + 1, :self.radius + 1]
+        self.conv_ne.weight.data = self.conv_ori.weight.data[:, :, :self.radius + 1, self.radius:]
+        self.conv_sw.weight.data = self.conv_ori.weight.data[:, :, self.radius:, :self.radius + 1]
+        self.conv_se.weight.data = self.conv_ori.weight.data[:, :, self.radius:, self.radius:]
 
     def forward(self, x):
-        # Custom padding    l       r      t             b
         # F.pad(,[lllll, rrrrr, ttttt, bbbbb])
         x_l = F.pad(x, [self.radius, 0, self.radius, self.radius])
         x_r = F.pad(x, [0, self.radius, self.radius, self.radius])
@@ -75,18 +74,19 @@ class SideWindowFilter(nn.Module):
         x_se = x_se * torch.sum(self.conv_ori.weight.data) / torch.sum(self.conv_se.weight.data) - x
 
         # Take the min
-        x_mutidim = torch.stack((x_l, x_r, x_u, x_d, x_nw, x_ne, x_sw, x_se), dim=2)
-        b, c, d, h, w = x_mutidim.shape
-        x_mutidim_min_mask = torch.argmin(torch.abs(x_mutidim), dim=2, keepdim=True)
-        x_mutidim = torch.gather(x_mutidim, dim=2, index=x_mutidim_min_mask)
-        x_mutidim = x_mutidim.view(b,c,h,w)
+        x_stack = torch.stack((x_l, x_r, x_u, x_d, x_nw, x_ne, x_sw, x_se), dim=2)
+        b, c, d, h, w = x_stack.shape
+        x_stack_min_mask = torch.argmin(torch.abs(x_stack), dim=2, keepdim=True)
+        x_stack = torch.gather(x_stack, dim=2, index=x_stack_min_mask)
+        x_stack = x_stack.view(b, c, h, w)
 
-        return x_mutidim + x
+        return x_stack + x
 
 
 import numpy as np
 from PIL import Image
 from torch.autograd import Variable
+
 
 def preprocess_image(pil_im):
     im_as_arr = np.float32(pil_im)
@@ -97,25 +97,28 @@ def preprocess_image(pil_im):
     im_as_ten.unsqueeze_(0)
     im_as_var = Variable(im_as_ten, requires_grad=False)
     with torch.no_grad():
-        im_as_var=torch.autograd.Variable(im_as_var)
+        im_as_var = torch.autograd.Variable(im_as_var)
     return im_as_var
 
+
 def recover_image(im_as_var):
-    im_as_var=im_as_var.squeeze_()
-    img=im_as_var.detach().numpy()
+    im_as_var = im_as_var.squeeze_()
+    img = im_as_var.detach().numpy()
     for channel, _ in enumerate(img):
         img[channel] *= 255
-    img=img.transpose(1,2,0)
-    img=Image.fromarray(np.uint8(img),'RGB')
+    img = img.transpose(1, 2, 0)
+    img = Image.fromarray(np.uint8(img), 'RGB')
     return img
 
-def sidewindowfilter(img,swf):
-    b,c,w,h=img.shape
+
+def sidewindowfilter(img, swf):
+    b, c, w, h = img.shape
     for i in range(c):
-        img[:,i,:,:] = swf(img[:,i,:,:].view(b,1,w,h)).view(b,w,h)
+        img[:, i, :, :] = swf(img[:, i, :, :].view(b, 1, w, h)).view(b, w, h)
     return img
 
-def process(img_path,filter,iteration=1):
+
+def process(img_path, filter, iteration=1):
     img = Image.open(img_path).convert('RGB')
     # img.show()
 
@@ -126,24 +129,9 @@ def process(img_path,filter,iteration=1):
         swf.set_filter(filter)
     else:
         swf = SideWindowFilter(1, 1, 3)
-    for i in range(iteration):
+    for _ in range(iteration):
         img_as_var = sidewindowfilter(img_as_var, swf)
 
     img = recover_image(img_as_var)
     # img.show()
     return img
-
-if __name__ == '__main__':
-    img_path = 'img/ori.jpg'
-    filter = np.array([[[[0.0453542,0.0566406,0.0453542],
-                       [0.0566406,0.0707355,0.0566406],
-                       [0.0453542,0.0566406,0.0453542]]]], dtype=np.float)
-    # filter=np.array([[[[1,1,1,1,1],
-    #                    [1,1,1,1,1],
-    #                    [1,1,1,1,1],
-    #                    [1,1,1,1,1],
-    #                    [1,1,1,1,1]]]], dtype=np.float)
-    filter /= np.sum(filter)
-    img = process(img_path, filter=filter, iteration=1)
-    # img.save('img/process.jpg')
-

@@ -4,6 +4,12 @@ The PyTorch implementation for [Side Window Filter](https://arxiv.org/abs/1905.0
 At the same time, We also designed a **[Side Window Convolution](SideWindowConv.py)** that can be used for back propagation. 
 Unfortunately, Our experiments have found that this Side Window Convolution is not as good as the original convolution.
 
+
+## Usage
+All codes are in [SideWindowFilter.py](SideWindowFilter.py) file.
+
+You can run `main.py` or modify by yourself.
+
 ## Demo
 #### Original image
 <div align="center">
