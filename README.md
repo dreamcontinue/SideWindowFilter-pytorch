@@ -1,7 +1,7 @@
 # Side Window Filter on PyTorch
 The PyTorch implementation for [Side Window Filter](https://arxiv.org/abs/1905.07177) by sharing convolution filter kernel parameters.
 
-At the same time, We also designed a **[Side Window Convolution](SideWindowConv.py)** that can be used for back propagation. 
+From this idea, We also designed a **[Side Window Convolution](SideWindowConv.py)** that can be used for back propagation. 
 Unfortunately, Our experiments have found that this Side Window Convolution is not as good as the original convolution.
 
 
